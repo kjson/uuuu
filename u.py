@@ -1,6 +1,7 @@
 ''' misc utils in python3 '''
 import functools
 import hashlib
+import itertools
 import os
 import pickle
 import time
@@ -45,3 +46,9 @@ def batches(iterable, batch_size: int):
             curret_size = 0
     if batch and curret_size != 0:
         yield tuple(batch[:curret_size])
+
+
+def peak(iterable, n_items: int = 1):
+    ''' Peak the first @n_items elements of @iterable. '''
+    seq1, seq2 = itertools.tee(iterable, 2)
+    return itertools.islice(seq1, 0, n_items), itertools.chain(seq2, iterable)
