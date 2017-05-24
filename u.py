@@ -30,3 +30,18 @@ def filecache(dirname: str = '.', lifetime: float = float("inf"), immutable: boo
             return data
         return inner
     return outer
+
+
+def batches(iterable, batch_size: int):
+    ''' Yield tuples of @batch_size length from @iterable. '''
+    assert batch_size > 1
+    batch = [None] * batch_size
+    curret_size = 0
+    for item in iterable:
+        batch[curret_size] = item
+        curret_size += 1
+        if curret_size >= batch_size:
+            yield tuple(batch)
+            curret_size = 0
+    if batch and curret_size != 0:
+        yield tuple(batch[:curret_size])
