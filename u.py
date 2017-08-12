@@ -52,3 +52,17 @@ def peak(iterable, n_items: int = 1):
     ''' Peak the first @n_items elements of @iterable. '''
     seq1, seq2 = itertools.tee(iterable, 2)
     return itertools.islice(seq1, 0, n_items), itertools.chain(seq2, iterable)
+
+
+def multimap(functions, iterable):
+    yield from functools.reduce(lambda i, f: map(f, i), functions, iterable)
+
+
+def split(predicate, iterable):
+    true, false = itertools.tee(iterable, 2)
+    return filter(predicate, true), itertools.filterfalse(predicate, false)
+
+
+def exhaust(iterable):
+    for _ in iterable:
+        pass
