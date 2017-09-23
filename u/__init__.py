@@ -5,17 +5,10 @@ import itertools
 import os
 import pickle
 import time
+import re
 
 
-def filecache(dirname: str = '.', lifetime: float = float("inf"), immutable: bool = True):
-    '''
-    Persists the decorated functions return value to the filesystem.
-
-    @dirname: Where to save the files.
-    @lifetime: How old ( in seconds) the persisted file can be before recompute.
-    @immutable: The persisted file must match the decorated func in cpython bytecode.
-
-    '''
+def filecache(dirname='.', lifetime=float("inf"), immutable=True):
     def outer(func):
         info = func.__name__ + str(func.__code__.co_code) if immutable else func.__name__
         filename = os.path.join(dirname, hashlib.sha224(info.encode('UTF-8')).hexdigest())
@@ -33,9 +26,9 @@ def filecache(dirname: str = '.', lifetime: float = float("inf"), immutable: boo
     return outer
 
 
-def batches(iterable, batch_size: int):
-    ''' Yield tuples of @batch_size length from @iterable. '''
-    assert batch_size > 1
+def batches(iterable, batch_size):
+    if batch_size <= 1:
+        raise ValueError('Size of batches must be greater than 1.')
     batch = [None] * batch_size
     curret_size = 0
     for item in iterable:
@@ -48,8 +41,7 @@ def batches(iterable, batch_size: int):
         yield tuple(batch[:curret_size])
 
 
-def peak(iterable, n_items: int = 1):
-    ''' Peak the first @n_items elements of @iterable. '''
+def peak(iterable, n_items):
     seq1, seq2 = itertools.tee(iterable, 2)
     return itertools.islice(seq1, 0, n_items), itertools.chain(seq2, iterable)
 
@@ -66,3 +58,40 @@ def split(predicate, iterable):
 def exhaust(iterable):
     for _ in iterable:
         pass
+
+
+class FuzzyDict:
+
+    patterns = dict()
+
+    def __len__(self):
+        return len(self.patterns)
+
+    def __getitem__(self, key):
+        return [value for pattern, value in self.patterns.items() if pattern.match(key)]
+
+    def __setitem__(self, pattern, value):
+        self.patterns[re.compile(pattern)] = value
+
+    def __delitem__(self, pattern):
+        del self.patterns[re.compile(pattern)]
+
+    def __contains__(self, key):
+        return any(pattern.match(key) for pattern in self.patterns)
+
+    def __iter__(self):
+        return iter(key.pattern for key in self.patterns.keys())
+
+    def keys(self):
+        return [key.pattern for key in self.patterns.keys()]
+
+    def pop(self, key):
+        matching_patterns = [pattern for pattern in self.patterns if pattern.match(key)]
+        return [self.patterns.pop(pattern) for pattern matching_patterns]
+
+    def popitem(self):
+        pattern, value = self.patterns.popitem()
+        return pattern.pattern, value
+
+    def values(self):
+        return self.patterns.values()
