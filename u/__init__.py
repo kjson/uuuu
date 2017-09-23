@@ -87,7 +87,7 @@ class FuzzyDict:
 
     def pop(self, key):
         matching_patterns = [pattern for pattern in self.patterns if pattern.match(key)]
-        return [self.patterns.pop(pattern) for pattern matching_patterns]
+        return [self.patterns.pop(pattern) for pattern in matching_patterns]
 
     def popitem(self):
         pattern, value = self.patterns.popitem()
