@@ -8,7 +8,7 @@ import time
 import re
 
 
-def filecache(dirname='.', lifetime=float("inf"), immutable=True):
+def save(dirname='.', lifetime=float("inf"), immutable=True):
     def outer(func):
         info = func.__name__ + str(func.__code__.co_code) if immutable else func.__name__
         filename = os.path.join(dirname, hashlib.sha224(info.encode('UTF-8')).hexdigest())
@@ -27,8 +27,7 @@ def filecache(dirname='.', lifetime=float("inf"), immutable=True):
 
 
 def batches(iterable, batch_size):
-    if batch_size <= 1:
-        raise ValueError('Size of batches must be greater than 1.')
+    assert batch_size <= 1
     batch = [None] * batch_size
     curret_size = 0
     for item in iterable:
@@ -62,36 +61,50 @@ def exhaust(iterable):
 
 class FuzzyDict:
 
-    patterns = dict()
+    patterns = {}
+    cache = {}
 
     def __len__(self):
         return len(self.patterns)
 
     def __getitem__(self, key):
-        return [value for pattern, value in self.patterns.items() if pattern.match(key)]
+        if key in self.cache:
+            return self.cache[key]
+        matched = [value for pattern, value in self.patterns.items() if pattern.match(key)]
+        self.cache[key] = matched
+        return matched
 
     def __setitem__(self, pattern, value):
         self.patterns[re.compile(pattern)] = value
+        if self.cache:
+            self.cache = {}
 
     def __delitem__(self, pattern):
         del self.patterns[re.compile(pattern)]
+        if self.cache:
+            self.cache = {}
 
     def __contains__(self, key):
-        return any(pattern.match(key) for pattern in self.patterns)
+        return key in self.cache or any(pattern.match(key) for pattern in self.patterns)
 
     def __iter__(self):
-        return iter(key.pattern for key in self.patterns.keys())
+        return iter(key.pattern for key in self.patterns)
 
-    def keys(self):
-        return [key.pattern for key in self.patterns.keys()]
+    def values(self):
+        return self.patterns.values()
+
+    def items(self):
+        for pattern, value in self.patterns.items():
+            yield pattern.pattern, value
 
     def pop(self, key):
+        if self.cache:
+            self.cache = {}
         matching_patterns = [pattern for pattern in self.patterns if pattern.match(key)]
         return [self.patterns.pop(pattern) for pattern in matching_patterns]
 
     def popitem(self):
+        if self.cache:
+            self.cache = {}
         pattern, value = self.patterns.popitem()
         return pattern.pattern, value
-
-    def values(self):
-        return self.patterns.values()
