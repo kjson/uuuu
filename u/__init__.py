@@ -27,7 +27,8 @@ def save(dirname='.', lifetime=float("inf"), immutable=True):
 
 
 def batches(iterable, batch_size):
-    assert batch_size <= 1
+    ''' Bunches an interable into batch size tuples. '''
+    assert batch_size > 1
     batch = [None] * batch_size
     curret_size = 0
     for item in iterable:
@@ -41,20 +42,24 @@ def batches(iterable, batch_size):
 
 
 def peak(iterable, n_items):
+    ''' An benign peak to the first n_items elements of an iterable '''
     seq1, seq2 = itertools.tee(iterable, 2)
     return itertools.islice(seq1, 0, n_items), itertools.chain(seq2, iterable)
 
 
 def multimap(functions, iterable):
+    ''' Builds an iterable by mapping consecutive function over the input iterable '''
     yield from functools.reduce(lambda i, f: map(f, i), functions, iterable)
 
 
 def split(predicate, iterable):
+    ''' Route items from an iterable into two new iterable, one where the predicate is true. '''
     true, false = itertools.tee(iterable, 2)
     return filter(predicate, true), itertools.filterfalse(predicate, false)
 
 
 def exhaust(iterable):
+    ''' Drains an iterable. Useful for times when calling `list` would consume to much resources '''
     for _ in iterable:
         pass
 
