@@ -3,12 +3,19 @@ import unittest
 
 from uuuu import iterables
 
+
+def fake_func(num):
+    """fake func to use in tests."""
+    return num + 1
+
+
 class TestIterables(unittest.TestCase):
     """Tests for functions in the iterables module."""
 
     def test_batch(self):
         """Test that we can batch an iterable into tuples."""
-        self.assertEqual(list(iterables.batches(range(10), 3)), [(0, 1, 2), (3, 4, 5), (6, 7, 8), (9,)])
+        self.assertEqual(
+            list(iterables.batches(range(10), 3)), [(0, 1, 2), (3, 4, 5), (6, 7, 8), (9,)])
         self.assertEqual(list(iterables.batches([], 2)), [])
         self.assertEqual(list(iterables.batches(range(10), 20)), [tuple(range(10))])
 
@@ -56,3 +63,10 @@ class TestIterables(unittest.TestCase):
         items = range(10)
         iterables.exhaust(items)
         self.assertEqual(list(items), list(range(10)))
+
+    def test_parallelize(self):
+        """Test that parallelize works as expected."""
+        self.assertEqual(
+            sorted(iterables.parallelize(fake_func, range(10))),
+            sorted([x + 1 for x in range(10)])
+        )

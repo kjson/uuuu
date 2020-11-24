@@ -1,14 +1,15 @@
 """A collection of functions that work on a python iterable objects"""
 import functools
 import itertools
+import multiprocessing
 
 
-def batches(iterable, batch_size):
+def batches(items, batch_size):
     """Bunches an interable into batch size tuples."""
     assert batch_size > 1
     batch = [None] * batch_size
     curret_size = 0
-    for item in iterable:
+    for item in items:
         batch[curret_size] = item
         curret_size += 1
         if curret_size >= batch_size:
@@ -37,18 +38,27 @@ def peek(items, num_items):
     return peeked, seq2
 
 
-def multimap(functions, iterable):
+def multimap(functions, items):
     """ Builds an iterable by mapping consecutive function over the input iterable """
-    yield from functools.reduce(lambda i, f: map(f, i), functions, iterable)
+    yield from functools.reduce(lambda i, f: map(f, i), functions, items)
 
 
-def split(predicate, iterable):
+def split(predicate, items):
     """ Route items from an iterable into two new iterable, one where the predicate is true. """
-    true, false = itertools.tee(iterable, 2)
+    true, false = itertools.tee(items, 2)
     return filter(predicate, true), itertools.filterfalse(predicate, false)
 
 
-def exhaust(iterable):
+def exhaust(items):
     """ Drains an iterator. Useful for times when calling `list` would consume to much resources """
-    for _ in iterable:
+    for _ in items:
         pass
+
+
+def parallelize(function, items):
+    """
+    Distributes items to as many processes as possible and applies the function. Results will not
+    necessarily return in order.
+    """
+    with multiprocessing.Pool() as pool:
+        yield from pool.imap_unordered(function, items)

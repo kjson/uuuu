@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='uuuu',
-    version='0.0.1',
+    version='0.1.0',
     author="kjson",
     description='Miscellaneous utilies using only the standard library.',
     long_description=long_description,
