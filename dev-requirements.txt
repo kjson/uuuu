@@ -1,0 +1,3 @@
+ipython==7
+ipdb
+pylint

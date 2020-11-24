@@ -1,1 +1,0 @@
-pip install -e git+ssh://git@github.com/kjson/u.git#egg=u
