@@ -6,17 +6,18 @@ import multiprocessing
 
 def batches(items, batch_size):
     """Bunches an interable into batch size tuples."""
-    assert batch_size > 1
-    batch = [None] * batch_size
-    curret_size = 0
+    if batch_size < 2:
+        raise ValueError("The batch size must be greater than two.")
+
+    batch = []
     for item in items:
-        batch[curret_size] = item
-        curret_size += 1
-        if curret_size >= batch_size:
+        batch.append(item)
+        if len(batch) >= batch_size:
             yield tuple(batch)
-            curret_size = 0
-    if batch and curret_size != 0:
-        yield tuple(batch[:curret_size])
+            batch = []
+
+    if batch:
+        yield tuple(batch)
 
 
 def peek(items, num_items):

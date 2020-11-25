@@ -19,6 +19,9 @@ class TestIterables(unittest.TestCase):
         self.assertEqual(list(iterables.batches([], 2)), [])
         self.assertEqual(list(iterables.batches(range(10), 20)), [tuple(range(10))])
 
+        with self.assertRaises(ValueError):
+            list(iterables.batches(range(10), 1))
+
     def test_peek(self):
         """Test that do a benign peek of an interable."""
 
