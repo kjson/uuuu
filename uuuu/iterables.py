@@ -1,6 +1,7 @@
 import functools
 import itertools
 import multiprocessing
+import random
 from typing import Iterable, Callable, Iterator, Tuple
 
 
@@ -20,6 +21,24 @@ def batches(items: Iterable, batch_size: int) -> Iterator[Tuple]:
         yield tuple(batch)
 
 
+def drop_random(items: Iterable, rate: float) -> Iterator:
+    """Yields from items with some probability"""
+    if not (0 <= rate <= 1):
+        raise ValueError("Rate must be between 0 and 1.")
+    yield from (item for item in items if random.random() < rate)
+    
+
+def roundrobin(*iterables: Iterable) -> Iterator:
+    """Yield items from multiple iterables in round-robin fashion."""
+    iterators = [iter(it) for it in iterables]
+    while iterators:
+        for it in list(iterators):
+            try:
+                yield next(it)
+            except StopIteration:
+                iterators.remove(it)
+
+
 def peek(items: Iterable, num_items: int) -> Tuple[Iterator, Iterator]:
     """
     Peek at the first `num_items` elements of the iterable.
@@ -34,7 +53,7 @@ def peek(items: Iterable, num_items: int) -> Tuple[Iterator, Iterator]:
     peeked = itertools.islice(seq1, num_items)
 
     # Chain the original items back if the input is an iterator
-    if iter(items) is items:
+    if isinstance(items, Iterator):
         return peeked, itertools.chain(seq2, items)
 
     return peeked, seq2
