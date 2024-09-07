@@ -1,14 +1,13 @@
 import functools
 import itertools
 import multiprocessing
-
 from typing import Iterable, Callable, Iterator, Tuple
 
 
 def batches(items: Iterable, batch_size: int) -> Iterator[Tuple]:
-    """Bunches an iterable into batch size tuples."""
+    """Yield items in tuples of the given batch size."""
     if batch_size < 2:
-        raise ValueError("The batch size must be greater than two.")
+        raise ValueError("Batch size must be greater than or equal to two.")
 
     batch = []
     for item in items:
@@ -23,7 +22,10 @@ def batches(items: Iterable, batch_size: int) -> Iterator[Tuple]:
 
 def peek(items: Iterable, num_items: int) -> Tuple[Iterator, Iterator]:
     """
-    A benign peek to the first @num_items elements of @items. Works on iterators as well.
+    Peek at the first `num_items` elements of the iterable.
+
+    Returns a tuple of (peeked elements, original iterable). If the input is an
+    iterator, chain the original items back to maintain full access.
     """
     if num_items < 0:
         raise ValueError("Cannot peek negative items from an iterable.")
@@ -31,7 +33,7 @@ def peek(items: Iterable, num_items: int) -> Tuple[Iterator, Iterator]:
     seq1, seq2 = itertools.tee(items, 2)
     peeked = itertools.islice(seq1, num_items)
 
-    # If the input is an iterator, we want to pass back the peeked and the remaining items.
+    # Chain the original items back if the input is an iterator
     if iter(items) is items:
         return peeked, itertools.chain(seq2, items)
 
@@ -39,26 +41,30 @@ def peek(items: Iterable, num_items: int) -> Tuple[Iterator, Iterator]:
 
 
 def multimap(functions: Iterable[Callable], items: Iterable) -> Iterator:
-    """Applies consecutive functions over the input iterable."""
+    """Apply multiple functions sequentially over the input iterable."""
     return functools.reduce(lambda i, f: map(f, i), functions, items)
 
 
 def split(predicate: Callable, items: Iterable) -> Tuple[Iterator, Iterator]:
-    """Routes items from an iterable into two iterables based on the predicate."""
+    """
+    Split items based on a predicate into two iterables: one where the predicate is True,
+    and one where it is False.
+    """
     true_iter, false_iter = itertools.tee(items, 2)
     return filter(predicate, true_iter), itertools.filterfalse(predicate, false_iter)
 
 
 def exhaust(items: Iterable) -> None:
-    """Drains an iterator. Useful when calling `list` would consume too many resources."""
+    """Consume all items from an iterator without storing them."""
     for _ in items:
         pass
 
 
 def parallelize(function: Callable, items: Iterable) -> Iterator:
     """
-    Distributes items to as many processes as available and applies the function.
-    Results will not necessarily return in order.
+    Apply the function to items in parallel using multiple processes.
+
+    Results may not be returned in the same order as the input.
     """
     with multiprocessing.Pool() as pool:
         yield from pool.imap_unordered(function, items)
