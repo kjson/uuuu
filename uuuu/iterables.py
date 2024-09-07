@@ -1,11 +1,12 @@
-"""A collection of functions that work on a python iterable objects"""
 import functools
 import itertools
 import multiprocessing
 
+from typing import Iterable, Callable, Iterator, Tuple
 
-def batches(items, batch_size):
-    """Bunches an interable into batch size tuples."""
+
+def batches(items: Iterable, batch_size: int) -> Iterator[Tuple]:
+    """Bunches an iterable into batch size tuples."""
     if batch_size < 2:
         raise ValueError("The batch size must be greater than two.")
 
@@ -20,46 +21,44 @@ def batches(items, batch_size):
         yield tuple(batch)
 
 
-def peek(items, num_items):
+def peek(items: Iterable, num_items: int) -> Tuple[Iterator, Iterator]:
     """
-    An benign peek to the first @num_items elements of @items. Note that this works
-    on iterators as well.
+    A benign peek to the first @num_items elements of @items. Works on iterators as well.
     """
     if num_items < 0:
         raise ValueError("Cannot peek negative items from an iterable.")
 
     seq1, seq2 = itertools.tee(items, 2)
-    peeked = itertools.islice(seq1, 0, num_items)
+    peeked = itertools.islice(seq1, num_items)
 
-    # In the case that the object is only an iterator, we want to pass back the peek'd iterator
-    # as well as the original iterator. So we chain the second sequence with the original
-    if items is iter(items):
+    # If the input is an iterator, we want to pass back the peeked and the remaining items.
+    if iter(items) is items:
         return peeked, itertools.chain(seq2, items)
 
     return peeked, seq2
 
 
-def multimap(functions, items):
-    """ Builds an iterable by mapping consecutive function over the input iterable """
-    yield from functools.reduce(lambda i, f: map(f, i), functions, items)
+def multimap(functions: Iterable[Callable], items: Iterable) -> Iterator:
+    """Applies consecutive functions over the input iterable."""
+    return functools.reduce(lambda i, f: map(f, i), functions, items)
 
 
-def split(predicate, items):
-    """ Route items from an iterable into two new iterable, one where the predicate is true. """
-    true, false = itertools.tee(items, 2)
-    return filter(predicate, true), itertools.filterfalse(predicate, false)
+def split(predicate: Callable, items: Iterable) -> Tuple[Iterator, Iterator]:
+    """Routes items from an iterable into two iterables based on the predicate."""
+    true_iter, false_iter = itertools.tee(items, 2)
+    return filter(predicate, true_iter), itertools.filterfalse(predicate, false_iter)
 
 
-def exhaust(items):
-    """ Drains an iterator. Useful for times when calling `list` would consume to much resources """
+def exhaust(items: Iterable) -> None:
+    """Drains an iterator. Useful when calling `list` would consume too many resources."""
     for _ in items:
         pass
 
 
-def parallelize(function, items):
+def parallelize(function: Callable, items: Iterable) -> Iterator:
     """
-    Distributes items to as many processes as possible and applies the function. Results will not
-    necessarily return in order.
+    Distributes items to as many processes as available and applies the function.
+    Results will not necessarily return in order.
     """
     with multiprocessing.Pool() as pool:
         yield from pool.imap_unordered(function, items)
