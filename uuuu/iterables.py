@@ -1,3 +1,4 @@
+"""Basic functions on iterables returning iterators"""
 import functools
 import itertools
 import multiprocessing
@@ -23,10 +24,10 @@ def batches(items: Iterable, batch_size: int) -> Iterator[Tuple]:
 
 def drop_random(items: Iterable, rate: float) -> Iterator:
     """Yields from items with some probability"""
-    if not (0 <= rate <= 1):
+    if not 0 <= rate <= 1:
         raise ValueError("Rate must be between 0 and 1.")
     yield from (item for item in items if random.random() < rate)
-    
+
 
 def roundrobin(*iterables: Iterable) -> Iterator:
     """Yield items from multiple iterables in round-robin fashion."""
