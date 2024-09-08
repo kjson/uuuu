@@ -1,12 +1,11 @@
 """Basic functions on iterables returning iterators"""
-import collections
 import functools
 import itertools
 import multiprocessing
 import random
 import time
 
-from typing import Iterable, Callable, Iterator, Tuple, List
+from typing import Iterable, Callable, Iterator, Tuple
 
 
 def batches(items: Iterable, batch_size: int) -> Iterator[Tuple]:
@@ -93,7 +92,11 @@ def parallelize(function: Callable, items: Iterable) -> Iterator:
         yield from pool.imap_unordered(function, items)
 
 
-def time_limited_stream(items: Iterable, max_duration: float, delay_per_item: float = 0) -> Iterator:
+def time_limited_stream(
+        items: Iterable,
+        max_duration: float,
+        delay_per_item: float = 0
+    ) -> Iterator:
     """Yield items from the iterable but stop after max_duration seconds."""
     start_time = time.time()
     for item in items:
