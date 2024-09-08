@@ -1,5 +1,6 @@
 import random
-import iterables
+from uuuu import iterables
+
 
 # Simulate a stream of log messages (with different log levels)
 def generate_logs():
