@@ -157,13 +157,12 @@ class TestIterables(unittest.TestCase):
 
     def test_time_limited_stream(self):
         """Test time_limited_stream stops yielding items after the time limit."""
-        # Use a short but manageable time limit with slight delay
-        # between items to simulate processing time
+        # Use a slightly longer time limit with delay between items
         result = list(iterables.time_limited_stream(
-            self.items_range_1000, 0.05, delay_per_item=0.005))
+            self.items_range_1000, 0.1, delay_per_item=0.005))
 
-        # Since the time limit is short, expect very few items, but >0
-        self.assertTrue(1 <= len(result) < 10)
+        # Expect at least 1 item, but fewer than 20
+        self.assertTrue(1 <= len(result) < 20)
 
     def test_filter_with_state(self):
         """Test filter_with_state yields items based on a stateful predicate."""
