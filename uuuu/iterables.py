@@ -1,9 +1,12 @@
 """Basic functions on iterables returning iterators"""
+import collections
 import functools
 import itertools
 import multiprocessing
 import random
-from typing import Iterable, Callable, Iterator, Tuple
+import time
+
+from typing import Iterable, Callable, Iterator, Tuple, List
 
 
 def batches(items: Iterable, batch_size: int) -> Iterator[Tuple]:
@@ -88,3 +91,54 @@ def parallelize(function: Callable, items: Iterable) -> Iterator:
     """
     with multiprocessing.Pool() as pool:
         yield from pool.imap_unordered(function, items)
+
+
+def time_limited_stream(items: Iterable, max_duration: float, delay_per_item: float = 0) -> Iterator:
+    """Yield items from the iterable but stop after max_duration seconds."""
+    start_time = time.time()
+    for item in items:
+        if time.time() - start_time > max_duration:
+            break
+        yield item
+        if delay_per_item:
+            time.sleep(delay_per_item)
+
+
+def filter_with_state(items: Iterable, predicate: Callable) -> Iterator:
+    """Filter items based on a stateful predicate function."""
+    prev = None
+    for item in items:
+        if prev is None or predicate(prev, item):
+            yield item
+        prev = item
+
+
+def rolling_aggregate(items: Iterable, func: Callable, initial=None) -> Iterator:
+    """Apply a rolling aggregation to the items."""
+    agg = initial
+    for item in items:
+        agg = func(agg, item) if agg is not None else item
+        yield agg
+
+
+def throttle(items: Iterable, max_rate: int) -> Iterator:
+    """
+    Limit the rate of items yielded from the iterable.
+
+    Args:
+        items (Iterable): The input iterable.
+        max_rate (int): Maximum number of items to yield per second.
+    """
+    interval = 1.0 / max_rate
+    for item in items:
+        time.sleep(interval)
+        yield item
+
+
+def inner_join(stream1: Iterable, stream2: Iterable, key1: Callable, key2: Callable) -> Iterator:
+    """Perform an inner join between two streams based on a key function."""
+    lookup = {key2(item): item for item in stream2}
+    for item in stream1:
+        k = key1(item)
+        if k in lookup:
+            yield item, lookup[k]

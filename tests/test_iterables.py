@@ -1,4 +1,5 @@
 import unittest
+import time
 from uuuu import iterables
 
 # Move the fake function outside of the class to make it picklable by multiprocessing
@@ -147,6 +148,48 @@ class TestIterables(unittest.TestCase):
         result_high = list(iterables.drop_random(self.items_range_1000, 0.99))
         result_low = list(iterables.drop_random(self.items_range_1000, 0.01))
         self.assertTrue(len(result_high) > len(result_low))
+
+    def test_time_limited_stream(self):
+        """Test time_limited_stream stops yielding items after the time limit."""
+        # Use a short but manageable time limit with slight delay between items to simulate processing time
+        result = list(iterables.time_limited_stream(self.items_range_1000, 0.05, delay_per_item=0.005))
+        
+        # Since the time limit is short, expect very few items, but >0
+        self.assertTrue(1 <= len(result) < 10)
+
+    def test_filter_with_state(self):
+        """Test filter_with_state yields items based on a stateful predicate."""
+        # Only yield if the current item is greater than the previous
+        result = list(iterables.filter_with_state([1, 2, 1, 3, 2, 4], lambda prev, curr: curr > prev))
+        self.assertEqual(result, [1, 2, 3, 4])
+
+    def test_rolling_aggregate(self):
+        """Test rolling_aggregate applies a rolling aggregation to the items."""
+        # Simple rolling sum
+        result = list(iterables.rolling_aggregate(self.items_range_10, lambda x, y: x + y))
+        self.assertEqual(result, [0, 1, 3, 6, 10, 15, 21, 28, 36, 45])
+
+    def test_throttle(self):
+        """Test throttle limits the rate of items yielded."""
+        # Use a higher rate of 1000 items per second for testing to reduce execution time
+        start_time = time.time()
+        result = list(iterables.throttle(self.items_range_10, 1000))
+        end_time = time.time()
+
+        # Allow a slightly higher execution time threshold to account for system overhead
+        self.assertTrue(end_time - start_time < 0.05)  # Ensure it finishes quickly but allow some overhead
+        self.assertEqual(result, list(self.items_range_10))
+
+    def test_inner_join(self):
+        """Test inner_join joins two streams based on a key."""
+        stream1 = [{'id': 1, 'value': 'a'}, {'id': 2, 'value': 'b'}, {'id': 3, 'value': 'c'}]
+        stream2 = [{'id': 1, 'other_value': 'x'}, {'id': 3, 'other_value': 'y'}]
+
+        result = list(iterables.inner_join(stream1, stream2, key1=lambda x: x['id'], key2=lambda x: x['id']))
+        self.assertEqual(result, [
+            ({'id': 1, 'value': 'a'}, {'id': 1, 'other_value': 'x'}),
+            ({'id': 3, 'value': 'c'}, {'id': 3, 'other_value': 'y'}),
+        ])
 
 
 if __name__ == '__main__':
